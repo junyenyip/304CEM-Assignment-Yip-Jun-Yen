@@ -1,35 +1,24 @@
-import { Component } from '@angular/core';
-import { FormControl } from '@angular/forms';
-import axios from 'axios';
-// import { list } from '@angular/fire/database';
+import { Component, OnInit } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
+import { FormControl } from '@angular/forms';
 import { MatTableDataSource } from '@angular/material/table';
-import { MatDialog } from '@angular/material/dialog';
-import { DialogComponent } from './dialog/dialog.component';
-// import { map, catchError } from 'rxjs/operators';
+import axios from 'axios';
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  selector: 'app-dialog',
+  templateUrl: './dialog.component.html',
+  styleUrls: ['./dialog.component.css']
 })
-export class AppComponent {
-  constructor(private firestore: AngularFirestore, public dialog: MatDialog){}
+export class DialogComponent implements OnInit {
 
-  displayedColumns = ["0", "1", "2", "3", "4", "5", "6"];
+  constructor(private firestore: AngularFirestore) { }
   dataSource!: MatTableDataSource<any>;
-
-  city = new FormControl('');
-  title = 'assignmentApi';
 
   items = [] as any;
 
-  ngOnInit(){
-    // this.firestore.collection("dataEntry").valueChanges().subscribe(data => {
-    //   this.dataSource = new MatTableDataSource(data);
-    //   console.log(data);
-    // });
-
+  city = new FormControl('');
+  
+  ngOnInit(): void {
     this.firestore.collection("dataEntry").snapshotChanges().subscribe(data => {
       this.items=[];
       data.forEach(a => {
@@ -42,22 +31,25 @@ export class AppComponent {
       })
       this.dataSource = new MatTableDataSource(this.items);
     });
+  }
 
-    // this.firestore.collection("dataEntry").snapshotChanges().pipe(map(actions=>{
-    //   return actions.map(a=>{
-    //     const id = a.payload.doc.id;
-    //     // const data = a.payload.doc.data();
-    //     return id;
-    //   })
-    // })).subscribe();
-  };
-
-  onSubmit(): void{
+  // onUpdate(): void{
+  //   this.city.get('city')?.value;
+  //   console.log(this.city.value);
+  //   this.firestore.collection("dataEntry").doc(this.items[0].id).update({
+  //     "0.cityName": this.city.value
+  //   });
+  // }
+  onUpdate(): void{
     const apiWeather = '0b14fe91eb0548e67cc8956d170f24cc';
     const apiNews = '661e6cc4402e4f98852097be992e11b6';
 
     this.city.get('city')?.value;
-    // console.log(this.city.value);
+    console.log(this.city.value);
+    
+    this.firestore.collection("dataEntry").doc(this.items[0].id).update({
+      "0.cityName": this.city.value
+    });
 
     const queryWeather = `https://api.openweathermap.org/data/2.5/weather?q=${this.city.value}&appid=${apiWeather}`;
     const queryNews = `https://newsapi.org/v2/everything?q=${this.city.value}&from=2021-10-20&sortBy=popularity&apiKey=${apiNews}`;
@@ -73,17 +65,10 @@ export class AppComponent {
       //     response2.data.articles[0].title, response2.data.articles[0].description);
       const obj = Object.assign({}, data);
       // console.log(obj);
-      this.firestore.collection("dataEntry").add(obj);
+      this.firestore.collection("dataEntry").doc(this.items[0].id).update(obj);
     })).catch(error=>{
       alert("Please enter a valid area");
-    });
+    });;
   }
 
-  openDialog(): void {
-    this.dialog.open(DialogComponent);
-  }
-
-  onDelete(): void{
-    this.firestore.collection("dataEntry").doc(this.items[0].id).delete();
-  }
 }
